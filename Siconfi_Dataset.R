@@ -24,7 +24,7 @@ source('https://raw.githubusercontent.com/paulo-icaro/Siconfi_API/refs/heads/mai
 # ===================================== #
 
 # --- Informações Prévias --- #
-ano = 2018:2025
+ano = 2015:2025
 bimestre = 1:6
 ente = 23
 relatorio = c('01', '04', '06')
@@ -32,7 +32,7 @@ esfera = 'M'
 tipo_demonstrativo = 'RREO'
 
 # --- Extração --- #
-siconfi_dataset = query_rreo(ano, bimestre, tipo_demonstrativo, '06', 'E', ente, TRUE)
+siconfi_dataset = query_rreo(ano, bimestre, tipo_demonstrativo, relatorio, 'E', ente, TRUE)
 
 
 
@@ -42,7 +42,8 @@ siconfi_dataset = query_rreo(ano, bimestre, tipo_demonstrativo, '06', 'E', ente,
 
 # Resultado Previdenciário Pago (Acumulado do Bimestre)
 resultado_previdenciario = siconfi_dataset[c(1, 3, 9, 12, 13, 14, 15)] %>%
-  filter(conta == 'RESULTADO PREVIDENCIÁRIO - FUNDO EM REPARTIÇÃO (XI) = (IX ¿ X)', coluna == 'DESPESAS PAGAS ATÉ O BIMESTRE (f)')
+  filter(conta == 'RESULTADO PREVIDENCIÁRIO - FUNDO EM REPARTIÇÃO (XI) = (IX ¿ X)',
+         coluna == 'DESPESAS PAGAS ATÉ O BIMESTRE (f)')
   
 # Dívida Consolidada Líquida (Até o Bimestre)
 divida_consolidada_liquida = siconfi_dataset[c(1, 3, 9, 12, 13, 14, 15)] %>%
@@ -50,7 +51,9 @@ divida_consolidada_liquida = siconfi_dataset[c(1, 3, 9, 12, 13, 14, 15)] %>%
 
 # Despesa Corrente Paga (Acumulado do Bimestre)
 depesa_corrente = siconfi_dataset[c(1, 3, 9, 12, 13, 14, 15)] %>%
-  filter(conta == 'DESPESAS CORRENTES', coluna == 'DESPESAS PAGAS ATÉ O BIMESTRE (j)', cod_conta == 'DespesasCorrentes')
+  filter(conta == 'DESPESAS CORRENTES',
+         coluna == 'DESPESAS PAGAS ATÉ O BIMESTRE (j)',
+         cod_conta == 'DespesasCorrentes')
 
 # Resultado Primário sem RPPS (Acumulado do Bimestre)
 resultado_primario_s_rpps = siconfi_dataset[c(1, 3, 9, 12, 13, 14, 15)] %>%
