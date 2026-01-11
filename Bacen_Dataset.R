@@ -41,7 +41,7 @@ rm(cod_bacen_series, name_bacen_series, start_date, end_date)
 
 
 # =================================== #
-# === Transforming Data frequency === #
+# === Transforming Data Frequency === #
 # =================================== #
 bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:6)])
 bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 7:9)])
