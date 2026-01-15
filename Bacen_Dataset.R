@@ -9,7 +9,7 @@
 # === Libraries === #
 # ================= #
 source('https://raw.githubusercontent.com/paulo-icaro/Bacen_API/main/Bacen_Query.R')
-source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Cumulative_Transforming.R')
+source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Frequency_Transforming.R')
 
 # Obs: Importação manual, caso o link direto não funcione. Lembre-se de trocar para o seu diretório.
 # source('C://Users/Paulo/Documents/Repositorios/Bacen_API/Bacen_API.R')
@@ -23,8 +23,8 @@ source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_
 # ======================= #
 
 # --- Previous Info --- #
-cod_bacen_series = c('13010', '13093', '13094', '14007', '14034', '25390', '433', '4390', '3696', '3698')
-name_bacen_series = c('variacao_emprego', 'exportacao', 'importacao', 'credito_pf', 'credito_pj', 'ibcrce', 'inflação_ipca', 'selic', 'tx_cambio_fp', 'tx_cambio_mp')
+cod_bacen_series = c('13010', '13093', '13094', '14007', '14034', '25390', '4390', '3696')#, '433')
+name_bacen_series = c('variacao_emprego', 'exportacao', 'importacao', 'credito_pf', 'credito_pj', 'ibcrce', 'selic', 'tx_cambio_fp')#, 'inflação_ipca')
 start_date = '01/01/2015'
 end_date = '31/12/2025'
 
@@ -34,14 +34,17 @@ bacen_dataset = bacen_dataset %>% mutate(data = as.Date(data, tryFormats = c('%d
 bacen_dataset[c(-1)] = lapply(X = bacen_dataset[c(-1)], FUN = as.numeric)
 
 
-# ================ #
-# === Cleasing === #
-# ================ #
-rm(cod_bacen_series, name_bacen_series, start_date, end_date)
-
 
 # =================================== #
 # === Transforming Data Frequency === #
 # =================================== #
-bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:6)])
-bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 7:9)])
+bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:4)])
+bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:7, 9)])
+bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly_sum, y = bacen_dataset_bimonthly_end, by = 'data')
+
+
+
+# ================ #
+# === Cleasing === #
+# ================ #
+rm(cod_bacen_series, name_bacen_series, start_date, end_date, bacen_dataset_bimonthly_sum, bacen_dataset_bimonthly_end)
