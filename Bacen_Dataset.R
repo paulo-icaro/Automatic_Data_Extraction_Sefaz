@@ -34,17 +34,21 @@ bacen_dataset = bacen_dataset %>% mutate(data = as.Date(data, tryFormats = c('%d
 bacen_dataset[c(-1)] = lapply(X = bacen_dataset[c(-1)], FUN = as.numeric)
 
 
+# --- Cumulative Adusting --- #
+bacen_dataset = bacen_dataset %>% mutate(`selic_cum_%` = (cumprod(1 + bacen_dataset$selic/100) - 1)*100)
+
+
 
 # =================================== #
 # === Transforming Data Frequency === #
 # =================================== #
 bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:4)])
-bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:7, 9)])
+bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:7, 9:10)])
 bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly_sum, y = bacen_dataset_bimonthly_end, by = 'data')
 
 
 
-# ================ #
+# ================ #  
 # === Cleasing === #
 # ================ #
 rm(cod_bacen_series, name_bacen_series, start_date, end_date, bacen_dataset_bimonthly_sum, bacen_dataset_bimonthly_end)
