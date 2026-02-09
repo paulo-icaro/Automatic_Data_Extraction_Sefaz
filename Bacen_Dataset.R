@@ -68,7 +68,7 @@ addWorksheet(wb = wb, sheetName = 'db_banco_central')
 addWorksheet(wb = wb, sheetName = 'tempo')
 writeData(wb = wb, sheet = 'db_banco_central', x = bacen_dataset_bimonthly[c(-1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'tempo', x = bacen_dataset_bimonthly[c(1)], rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'db_banco_central_bimestral_teste.xlsx', overwrite = TRUE)
+saveWorkbook(wb = wb, file = 'db_banco_central_bimestral.xlsx', overwrite = TRUE)
 
 
 
