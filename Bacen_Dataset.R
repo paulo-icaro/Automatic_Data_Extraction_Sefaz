@@ -44,6 +44,7 @@ bacen_dataset = bacen_dataset %>% mutate(`selic_cum_%` = (cumprod(1 + bacen_data
 # =================================== #
 bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:4)])
 bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:7, 9:10)])
+bacen_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', bacen_dataset[c(1, 8)])
 bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly_sum, y = bacen_dataset_bimonthly_end, by = 'data')
 
 
