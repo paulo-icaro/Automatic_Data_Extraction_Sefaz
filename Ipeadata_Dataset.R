@@ -5,10 +5,13 @@
 # --- Script by Paulo Icaro --- #
 
 
-# =================== #
-# === Bibliotecas === #
-# =================== #
+# ================= #
+# === Libraries === #
+# ================= #
 source('https://raw.githubusercontent.com/paulo-icaro/Ipeadata_API/refs/heads/main/Ipeadata_Query.R')
+source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Frequency_Transforming.R')
+library(openxlsx)       # Armazenar arquivos em formato excel
+
 
 # Obs: Importação manual, caso o link direto não funcione. Lembre-se de trocar para o seu diretório.
 # source('C://Users/Paulo/Documents/Repositorios/Ipeadata_API/Ipeadata_API.R')
@@ -16,21 +19,58 @@ source('https://raw.githubusercontent.com/paulo-icaro/Ipeadata_API/refs/heads/ma
 # source('C://Users/Paulo/Documents/Repositorios/Ipeadata_API/Ipeadata_Query.R')
 
 
-# ===================================== #
-# === Extração do Conjunto de Dados === #
-# ===================================== #
+# ======================= #
+# === Data Extraction === #
+# ======================= #
 
-# --- Informações Prévias --- #
+# --- Previous Info --- #
 cod_ipeadata_series = c('PRECOS12_IPCA12', 'DIMAC_CF_INVBR_TOT12')
 name_ipeadata_series = c('ipca', 'inv_bruto_total')
-periodo = as.character(2015:2025)
+periodo = as.character(2014:2025)
 
-# --- Extração --- #
+# --- Extraction --- #
 ipeadata_dataset = ipeadata_query(cod_ipeadata_series, name_ipeadata_series, periodo)
+ipeadata_dataset = ipeadata_dataset %>% mutate(data = as.Date(data))
+ipeadata_dataset$ipca = (ipeadata_dataset$ipca/last(ipeadata_dataset$ipca))*100
+ipeadata_dataset = ipeadata_dataset %>% mutate('ipca_%' = ipca/lag(ipca) - 1) 
+ipeadata_dataset = ipeadata_dataset %>% filter(substr(data, 1, 4) != '2014') %>% select(colnames(ipeadata_dataset[c(1, 3:4)]))
 
+
+
+# ================================== #
+# == Transforming Data Frequency === #
+# ================================== #
+ipeadata_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', ipeadata_dataset[c(1,2)])
+ipeadata_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', ipeadata_dataset[c(1,3)])
+ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly_sum, y = ipeadata_dataset_bimonthly_cum, by = 'data')
+
+
+
+# ======================= #
+# === Storing Results === #
+# ======================= #
+
+# ------------------------- #
+# --- Original Database --- #
+# ------------------------- #
+wb = createWorkbook(creator = 'Sefaz-CE')
+addWorksheet(wb = wb, sheetName = 'db_ipeadata')
+writeData(wb = wb, sheet = 'db_ipeadata', x = ipeadata_dataset, rowNames = FALSE)
+saveWorkbook(wb = wb, file = 'db_ipeadata_original.xlsx', overwrite = TRUE)
+
+# -------------------------- #
+# --- Bimonthly Database --- #
+# -------------------------- #
+wb = createWorkbook(creator = 'Sefaz-CE')
+addWorksheet(wb = wb, sheetName = 'db_ipeadata')
+addWorksheet(wb = wb, sheetName = 'tempo')
+writeData(wb = wb, sheet = 'db_ipeadata', x = ipeadata_dataset_bimonthly[c(-1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'tempo', x = ipeadata_dataset_bimonthly[c(1)], rowNames = FALSE)
+saveWorkbook(wb = wb, file = 'db_ipeadata_bimestral.xlsx', overwrite = TRUE)
 
 
 # =============== #
 # === Limpeza === #
 # =============== #
-rm(cod_ipeadata_series, name_ipeadata_series, periodo)
+rm(cod_ipeadata_series, name_ipeadata_series, periodo, ipeadata_dataset_bimonthly_cum,
+   ipeadata_dataset_bimonthly_sum, ipeadata_dataset, wb)
