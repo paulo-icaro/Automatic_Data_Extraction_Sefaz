@@ -1,0 +1,35 @@
+# ========================================= #
+# === Automatizações - Séries Coletadas === #
+# ========================================= #
+
+Bacen
+- Variação de Emprego Mensal (13010)
+- Exportação e Importação Mensal (13093/13094)
+- Crédito para Pessoa Física e Jurídica Mensal (14007/14034)
+- Ibcr-Ce (25390)
+- Selic %am (4390)
+- Ipca %am (433)
+- Taxa de Câmbio - Fim/Média do Período (3696/3698)
+
+Ipeadata
+- Investimento Bruto Total Mensal (DIMAC_CF_INVBR_TOT12)
+- Ipca Índice (PRECOS12_IPCA12)
+
+Siconfi
+- Investimento Municipal Pago Acumulado Bimestral
+- Resultado Previdenciário Pago Acumulado Bimestral (Fundo em Participação)
+- Resultado Primário Bimestral
+- Dívida Consolidada Líquida
+
+
+
+# =================================================== #
+# === Transformações (Bimestralização das Séries) === #
+# =================================================== #
+- Variação Emprego (Soma)
+- Imp e Exp (Soma)
+- Crédito Pf e PJ (Fim Período)
+- Tx Câmbio (Fim Período)
+- IBCR-CE (Fim Período / Media ?)
+- IPCA - (Acumulada)
+- SELIC - (Acumulada)
