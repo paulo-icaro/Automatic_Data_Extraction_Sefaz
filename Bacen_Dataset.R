@@ -51,24 +51,14 @@ bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly, y = bacen_datas
 # ======================= #
 # === Storing Results === #
 # ======================= #
-
-# ------------------------- #
-# --- Original Database --- #
-# ------------------------- #
 wb = createWorkbook(creator = 'Sefaz-CE')
-addWorksheet(wb = wb, sheetName = 'db_banco_central')
-writeData(wb = wb, sheet = 'db_banco_central', x = bacen_dataset, rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'db_banco_central_original.xlsx', overwrite = TRUE)
-
-# -------------------------- #
-# --- Bimonthly Database --- #
-# -------------------------- #
-wb = createWorkbook(creator = 'Sefaz-CE')
-addWorksheet(wb = wb, sheetName = 'db_banco_central')
 addWorksheet(wb = wb, sheetName = 'tempo')
-writeData(wb = wb, sheet = 'db_banco_central', x = bacen_dataset_bimonthly[c(-1)], rowNames = FALSE)
+addWorksheet(wb = wb, sheetName = 'db_banco_central_bimonthly')
+addWorksheet(wb = wb, sheetName = 'db_banco_central_original')
 writeData(wb = wb, sheet = 'tempo', x = bacen_dataset_bimonthly[c(1)], rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'db_banco_central_bimestral.xlsx', overwrite = TRUE)
+writeData(wb = wb, sheet = 'db_banco_central_bimonthly', x = bacen_dataset_bimonthly[c(-1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'db_banco_central_original', x = bacen_dataset, rowNames = FALSE)
+saveWorkbook(wb = wb, file = 'db_banco_central.xlsx', overwrite = TRUE)
 
 
 

@@ -49,24 +49,14 @@ ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly_sum, y = i
 # ======================= #
 # === Storing Results === #
 # ======================= #
-
-# ------------------------- #
-# --- Original Database --- #
-# ------------------------- #
 wb = createWorkbook(creator = 'Sefaz-CE')
-addWorksheet(wb = wb, sheetName = 'db_ipeadata')
-writeData(wb = wb, sheet = 'db_ipeadata', x = ipeadata_dataset, rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'db_ipeadata_original.xlsx', overwrite = TRUE)
-
-# -------------------------- #
-# --- Bimonthly Database --- #
-# -------------------------- #
-wb = createWorkbook(creator = 'Sefaz-CE')
-addWorksheet(wb = wb, sheetName = 'db_ipeadata')
 addWorksheet(wb = wb, sheetName = 'tempo')
-writeData(wb = wb, sheet = 'db_ipeadata', x = ipeadata_dataset_bimonthly[c(-1)], rowNames = FALSE)
+addWorksheet(wb = wb, sheetName = 'db_ipeadata_bimonthly')
+addWorksheet(wb = wb, sheetName = 'db_ipeadata_original')
 writeData(wb = wb, sheet = 'tempo', x = ipeadata_dataset_bimonthly[c(1)], rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'db_ipeadata_bimestral.xlsx', overwrite = TRUE)
+writeData(wb = wb, sheet = 'db_ipeadata_bimonthly', x = ipeadata_dataset_bimonthly[c(-1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'db_ipeadata_original', x = ipeadata_dataset, rowNames = FALSE)
+saveWorkbook(wb = wb, file = 'db_ipeadata.xlsx', overwrite = TRUE)
 
 
 # =============== #
