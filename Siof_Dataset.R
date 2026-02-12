@@ -120,6 +120,16 @@ invest_region_equip_bimonthly = cumulative_transform('soma', 'bimestral', invest
 invest_region_obras_bimonthly = cumulative_transform('soma', 'bimestral', invest_region_obras[c(3:18)])
 invest_region_total_bimonthly = cumulative_transform('soma', 'bimestral', invest_region_total[c(3:18)])
 
+invest_region_equip_bimonthly = invest_region_equip_bimonthly %>% rename_with(~paste0(.x, '_equip'), -data)
+invest_region_obras_bimonthly = invest_region_obras_bimonthly %>% rename_with(~paste0(.x, '_obras'), -data)
+invest_region_total_bimonthly = invest_region_total_bimonthly %>% rename_with(~paste0(.x, '_total'), -data)
+
+
+# --- Joining Tables --- #
+invest_region_bimonthly = left_join(x = invest_region_equip_bimonthly, y = invest_region_obras_bimonthly, by = 'data')
+invest_region_bimonthly = left_join(x = invest_region_bimonthly, y = invest_region_total_bimonthly, by = 'data')
+
+
 
 
 # --------------------------------- #
@@ -194,10 +204,38 @@ invest_funcao_obras_bimonthly = cumulative_transform('soma', 'bimestral', invest
 invest_funcao_total_bimonthly = cumulative_transform('soma', 'bimestral', invest_funcao_total[c(3:36)])
 invest_funcao_corre_bimonthly = cumulative_transform('soma', 'bimestral', invest_funcao_corre[c(3:40)])
 
+invest_funcao_equip_bimonthly = invest_funcao_equip_bimonthly %>% rename_with(~paste0(.x, '_equip'), -data)
+invest_funcao_obras_bimonthly = invest_funcao_obras_bimonthly %>% rename_with(~paste0(.x, '_obras'), -data)
+invest_funcao_total_bimonthly = invest_funcao_total_bimonthly %>% rename_with(~paste0(.x, '_total'), -data)
+invest_funcao_corre_bimonthly = invest_funcao_corre_bimonthly %>% rename_with(~paste0(.x, '_corre'), -data)
+
+
+# --- Joining Tables --- #
+invest_funcao_bimonthly = left_join(x = invest_funcao_equip_bimonthly, y = invest_funcao_obras_bimonthly, by = 'data')
+invest_funcao_bimonthly = left_join(x = invest_funcao_total_bimonthly, y = invest_funcao_bimonthly, by = 'data')
+invest_funcao_bimonthly = left_join(x = invest_funcao_corre_bimonthly, y = invest_funcao_bimonthly, by = 'data')
+
+
+
+# ======================= #
+# === Storing Results === #
+# ======================= #
+wb = createWorkbook(creator = 'Sefaz-CE')
+addWorksheet(wb = wb, sheetName = 'tempo')
+addWorksheet(wb = wb, sheetName = 'macro')
+addWorksheet(wb = wb, sheetName = 'funcao')
+addWorksheet(wb = wb, sheetName = 'regional')
+writeData(wb = wb, sheet = 'tempo', x = invest_funcao_bimonthly[c(1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'macro', x = invest_macro_bimonthly[c(-1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'funcao', x = invest_funcao_bimonthly[c(-1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'regional', x = invest_region_bimonthly[c(-1)], rowNames = FALSE)
+saveWorkbook(wb = wb, file = 'Databases/Outputs/db_investimentos.xlsx', overwrite = TRUE)
+
 
 
 # ================ #
 # === Cleasing === #
 # ================ #
-#rm(invest_macro, invest_region_equip, invest_region_obras, invest_region_total, invest_funcao_equip, invest_funcao_obras,
-#   invest_funcao_total, invest_funcao_corre, invest_programa_regiao, invest_funcao, ipca_series)
+rm(invest_macro, invest_region_equip, invest_region_obras, invest_region_total, invest_funcao_equip, invest_funcao_obras, invest_funcao_total,
+   invest_funcao_corre, invest_region_equip_bimonthly, invest_region_obras_bimonthly, invest_region_total_bimonthly, invest_funcao_equip_bimonthly,
+   invest_funcao_obras_bimonthly, invest_funcao_total_bimonthly, invest_funcao_corre_bimonthly, invest_programa_regiao, invest_funcao, ipca_series, wb)
