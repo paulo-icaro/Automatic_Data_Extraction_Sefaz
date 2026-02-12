@@ -40,9 +40,11 @@ ipeadata_dataset = ipeadata_dataset %>% filter(substr(data, 1, 4) != '2014')
 # ================================== #
 # == Transforming Data Frequency === #
 # ================================== #
-ipeadata_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', ipeadata_dataset[c(1,2)])
-ipeadata_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', ipeadata_dataset[c(1,3)])
+ipeadata_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', ipeadata_dataset[c(1,3)])
+ipeadata_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', ipeadata_dataset[c(1,4)])
+ipeadata_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', ipeadata_dataset[c(1,2)])
 ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly_sum, y = ipeadata_dataset_bimonthly_cum, by = 'data')
+ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly, y = ipeadata_dataset_bimonthly_end, by = 'data')
 
 
 
@@ -62,5 +64,5 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_ipeadata.xlsx', overwrite = T
 # =============== #
 # === Limpeza === #
 # =============== #
-rm(cod_ipeadata_series, name_ipeadata_series, periodo, ipeadata_dataset_bimonthly_cum,
-   ipeadata_dataset_bimonthly_sum, ipeadata_dataset, wb)
+rm(cod_ipeadata_series, name_ipeadata_series, periodo, ipeadata_dataset_bimonthly_cum, ipeadata_dataset_bimonthly_sum,
+   ipeadata_dataset, cod_ipeadata_series, name_ipeadata_series, path, periodo, wb)
