@@ -33,7 +33,7 @@ ipeadata_dataset = ipeadata_query(cod_ipeadata_series, name_ipeadata_series, per
 ipeadata_dataset = ipeadata_dataset %>% mutate(data = as.Date(data))
 ipeadata_dataset$ipca = (ipeadata_dataset$ipca/last(ipeadata_dataset$ipca))*100
 ipeadata_dataset = ipeadata_dataset %>% mutate('ipca_%' = ipca/lag(ipca) - 1) 
-ipeadata_dataset = ipeadata_dataset %>% filter(substr(data, 1, 4) != '2014') %>% select(colnames(ipeadata_dataset[c(1, 3:4)]))
+ipeadata_dataset = ipeadata_dataset %>% filter(substr(data, 1, 4) != '2014')
 
 
 
