@@ -65,4 +65,4 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_ipeadata.xlsx', overwrite = T
 # === Limpeza === #
 # =============== #
 rm(cod_ipeadata_series, name_ipeadata_series, periodo, ipeadata_dataset_bimonthly_cum, ipeadata_dataset_bimonthly_sum,
-   ipeadata_dataset, cod_ipeadata_series, name_ipeadata_series, path, periodo, wb)
+   ipeadata_dataset_bimonthly_end, ipeadata_dataset, cod_ipeadata_series, name_ipeadata_series, path, periodo, wb)
