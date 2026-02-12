@@ -35,7 +35,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
           dataset %>% 
           mutate(data = floor_date(data, unit = 'bimonth')) %>%
           group_by(data) %>%
-          summarise(across(colnames(dataset[c(-1)]), sum))
+          summarise(across(colnames(dataset[names(dataset) != 'data']), sum))
     }
     
     else if(frequency == 'trimestral'){
@@ -43,7 +43,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
           dataset %>% 
           mutate(data = floor_date(data, unit = 'quarter')) %>%
           group_by(data) %>%
-          summarise(across(colnames(dataset[c(-1)]), sum))
+          summarise(across(colnames(dataset[names(dataset) != 'data']), sum))
     }
     
     else if(frequency == 'semestral'){
@@ -51,7 +51,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
           dataset %>% 
           mutate(data = floor_date(data, unit = 'halfyear')) %>%
           group_by(data) %>%
-          summarise(across(colnames(dataset[c(-1)]), sum))
+          summarise(across(colnames(dataset[names(dataset) != 'data']), sum))
     }
   }
   
@@ -96,7 +96,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>% 
         mutate(data = floor_date(x = data, unit = 'month')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), mean)))
+        mutate(across(colnames(dataset[names(dataset) != 'data']), mean)))
     }
     
     else if(frequency == 'bimestral'){
@@ -104,7 +104,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>% 
         mutate(data = floor_date(x = data, unit = 'bimonth')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), mean)))
+        mutate(across(colnames(dataset[names(dataset) != 'data']), mean)))
     }
     
     else if(frequency == 'trimestral'){
@@ -112,7 +112,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>%
         mutate(data = floor_date(x = data, unit = 'quarter')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), mean)))
+        mutate(across(colnames(dataset[names(dataset) != 'data']), mean)))
     }
     
     else if(frequency == 'semestral'){
@@ -120,7 +120,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>%
         mutate(data = floor_date(x = data, unit = 'halfyear')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), mean)))
+        mutate(across(colnames(dataset[names(dataset) != 'data']), mean)))
     }
   }
   
@@ -135,7 +135,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>% 
         mutate(data = floor_date(x = data, unit = 'month')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), ~ cumprod(1 + .x/100) - 1)*100) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ cumprod(1 + .x/100) - 1)*100) %>%
         slice_tail(n = 1) %>%
         ungroup()
     }
@@ -145,7 +145,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>% 
         mutate(data = floor_date(x = data, unit = 'bimonth')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), ~ cumprod(1 + .x/100) - 1)*100) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ cumprod(1 + .x/100) - 1)*100) %>%
         slice_tail(n = 1) %>%
         ungroup()
     }
@@ -155,7 +155,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>%
         mutate(data = floor_date(x = data, unit = 'quarter')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), ~ cumprod(1 + .x/100) - 1)*100) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ cumprod(1 + .x/100) - 1)*100) %>%
         slice_tail(n = 1) %>%
         ungroup()
     }
@@ -165,7 +165,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         dataset %>%
         mutate(data = floor_date(x = data, unit = 'halfyear')) %>%
         group_by(data) %>%
-        mutate(across(colnames(dataset[c(-1)]), ~ cumprod(1 + .x/100) - 1)*100) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ cumprod(1 + .x/100) - 1)*100) %>%
         slice_tail(n = 1) %>%
         ungroup()
     }
