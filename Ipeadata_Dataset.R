@@ -56,7 +56,7 @@ addWorksheet(wb = wb, sheetName = 'db_ipeadata_original')
 writeData(wb = wb, sheet = 'tempo', x = ipeadata_dataset_bimonthly[c(1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'db_ipeadata_bimonthly', x = ipeadata_dataset_bimonthly[c(-1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'db_ipeadata_original', x = ipeadata_dataset, rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'db_ipeadata.xlsx', overwrite = TRUE)
+saveWorkbook(wb = wb, file = 'Databases/Outputs/db_ipeadata.xlsx', overwrite = TRUE)
 
 
 # =============== #
