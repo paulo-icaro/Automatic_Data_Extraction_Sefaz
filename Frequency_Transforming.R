@@ -128,7 +128,7 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
   # ----------------------------------- #  
   # --- Transform Type - Cumulative --- #
   # ----------------------------------- #
-  else if(transform_type == 'acumulado'){
+  else if(transform_type == 'tx_acumulada'){
     
     if(frequency == 'mensal'){
       dataset = 
@@ -168,6 +168,40 @@ cumulative_transform = function(transform_type, frequency, dataset, change_date 
         mutate(across(colnames(dataset[names(dataset) != 'data']), ~ cumprod(1 + .x/100) - 1)*100) %>%
         slice_tail(n = 1) %>%
         ungroup()
+    }
+  }
+  
+  
+  # ----------------------------- #  
+  # --- Transform Type - Diff  --- #
+  # ----------------------------- #
+  else if(transform_type == 'diff_acumulado'){
+    
+    if(frequency == 'mensal'){
+      dataset = unique(
+        dataset %>% 
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ ifelse(month(data) == 1, .x, .x - lag(.x)))))
+    }
+    
+    else if(frequency == 'bimestral'){
+      dataset = unique(
+        dataset %>% 
+        filter(month(data) %% 2 == 0) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ ifelse(month(data) == 2, .x, .x - lag(.x)))))
+    }
+    
+    else if(frequency == 'trimestral'){
+      dataset = unique(
+        dataset %>% 
+        filter(month(data) %% 3 == 0) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ ifelse(month(data) == 3, .x, .x - lag(.x)))))
+    }
+    
+    else if(frequency == 'semestral'){
+      dataset = unique(
+        dataset %>% 
+        filter(month(data) %% 6 == 0) %>%
+        mutate(across(colnames(dataset[names(dataset) != 'data']), ~ ifelse(month(data) == 6, .x, .x - lag(.x)))))
     }
   }
   
