@@ -27,10 +27,16 @@ library(openxlsx)       # Armazenar arquivos em formato excel
 cod_ipeadata_series = c('PRECOS12_IPCA12', 'DIMAC_CF_INVBR_TOT12')
 name_ipeadata_series = c('ipca', 'inv_bruto_total')
 periodo = as.character(2014:2025)
+#periodo = as.character(2014:year(Sys.Date()))
+
 
 # --- Extraction --- #
 ipeadata_dataset = ipeadata_query(cod_ipeadata_series, name_ipeadata_series, periodo)
+
+# --- Date Adjustment --- #
 ipeadata_dataset = ipeadata_dataset %>% mutate(data = as.Date(data))
+
+# --- Adjusting Price Index Series --- #
 ipeadata_dataset$ipca = (ipeadata_dataset$ipca/last(ipeadata_dataset$ipca))*100
 ipeadata_dataset = ipeadata_dataset %>% mutate('ipca_%' = ipca/lag(ipca) - 1) 
 ipeadata_dataset = ipeadata_dataset %>% filter(substr(data, 1, 4) != '2014')
@@ -41,10 +47,8 @@ ipeadata_dataset = ipeadata_dataset %>% filter(substr(data, 1, 4) != '2014')
 # == Transforming Data Frequency === #
 # ================================== #
 ipeadata_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', ipeadata_dataset[c(1,3)])
-ipeadata_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', ipeadata_dataset[c(1,4)])
 ipeadata_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', ipeadata_dataset[c(1,2)])
-ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly_sum, y = ipeadata_dataset_bimonthly_cum, by = 'data')
-ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly, y = ipeadata_dataset_bimonthly_end, by = 'data')
+ipeadata_dataset_bimonthly = left_join(x = ipeadata_dataset_bimonthly_sum, y = ipeadata_dataset_bimonthly_end, by = 'data')
 
 
 
@@ -58,11 +62,11 @@ addWorksheet(wb = wb, sheetName = 'db_ipeadata_original')
 writeData(wb = wb, sheet = 'tempo', x = ipeadata_dataset_bimonthly[c(1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'db_ipeadata_bimonthly', x = ipeadata_dataset_bimonthly[c(-1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'db_ipeadata_original', x = ipeadata_dataset, rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'Databases/Outputs/db_ipeadata.xlsx', overwrite = TRUE)
+saveWorkbook(wb = wb, file = 'db_ipeadata.xlsx', overwrite = TRUE)
 
 
 # =============== #
 # === Limpeza === #
 # =============== #
-rm(cod_ipeadata_series, name_ipeadata_series, periodo, ipeadata_dataset_bimonthly_cum, ipeadata_dataset_bimonthly_sum,
-   ipeadata_dataset_bimonthly_end, ipeadata_dataset, wb)
+rm(cod_ipeadata_series, name_ipeadata_series, periodo, wb, ipeadata_dataset,
+   ipeadata_dataset_bimonthly_sum, ipeadata_dataset_bimonthly_end)
