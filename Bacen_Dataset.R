@@ -25,13 +25,16 @@ library(openxlsx)       # Armazenar arquivos em formato excel
 # ======================= #
 
 # --- Previous Info --- #
-cod_bacen_series = c('13010', '13093', '13094', '14007', '14034', '25390', '4390', '3696')#, '433')
-name_bacen_series = c('variacao_emprego', 'exportacao', 'importacao', 'credito_pf', 'credito_pj', 'ibcrce', 'selic', 'tx_cambio_fp')#, 'inflação_ipca')
+cod_bacen_series = c('13010', '13093', '13094', '14007', '14034', '25390', '4189', '3697', '433', '14061')
+name_bacen_series = c('variacao_emprego', 'exportacao', 'importacao', 'credito_pf', 'credito_pj', 'ibcrce', 'selic_acum_anual', 'tx_cambio_mp', 'inflação_ipca', 'saldo_oper_cred')
 start_date = '01/01/2015'
 end_date = '31/12/2025'
+#end_date = format(Sys.Date(), '%d/%m/%Y')
 
 # --- Extraction --- #
 bacen_dataset = bacen_query(cod_bacen_series, name_bacen_series, start_date, end_date)
+
+# --- Date Adjustment --- #
 bacen_dataset = bacen_dataset %>% mutate(data = as.Date(data, tryFormats = c('%d/%m/%Y')))
 bacen_dataset[c(-1)] = lapply(X = bacen_dataset[c(-1)], FUN = as.numeric)
 
@@ -41,10 +44,12 @@ bacen_dataset[c(-1)] = lapply(X = bacen_dataset[c(-1)], FUN = as.numeric)
 # === Transforming Data Frequency === #
 # =================================== #
 bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:4)], TRUE)
-bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:7, 9)], TRUE)
-bacen_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', bacen_dataset[c(1, 8)], TRUE)
+bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:8, 11)], TRUE)
+bacen_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', bacen_dataset[c(1, 10)], TRUE)
+bacen_dataset_bimonthly_med = cumulative_transform('media', 'bimestral', bacen_dataset[c(1, 9)], TRUE)
 bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly_sum, y = bacen_dataset_bimonthly_end, by = 'data')
 bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly, y = bacen_dataset_bimonthly_cum, by = 'data')
+bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly, y = bacen_dataset_bimonthly_med, by = 'data')
 
 
 
@@ -58,7 +63,7 @@ addWorksheet(wb = wb, sheetName = 'db_banco_central_original')
 writeData(wb = wb, sheet = 'tempo', x = bacen_dataset_bimonthly[c(1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'db_banco_central_bimonthly', x = bacen_dataset_bimonthly[c(-1)], rowNames = FALSE)
 writeData(wb = wb, sheet = 'db_banco_central_original', x = bacen_dataset, rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'Databases/Outputs/db_banco_central.xlsx', overwrite = TRUE)
+saveWorkbook(wb = wb, file = 'db_banco_central.xlsx', overwrite = TRUE)
 
 
 
@@ -66,4 +71,4 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_banco_central.xlsx', overwrit
 # === Cleasing === #
 # ================ #
 rm(cod_bacen_series, name_bacen_series, start_date, end_date, bacen_dataset_bimonthly_sum,
-   bacen_dataset_bimonthly_end, bacen_dataset_bimonthly_cum, bacen_dataset, wb)
+   bacen_dataset_bimonthly_end, bacen_dataset_bimonthly_cum, bacen_dataset_bimonthly_med, bacen_dataset, wb)
