@@ -45,7 +45,7 @@ bacen_dataset[c(-1)] = lapply(X = bacen_dataset[c(-1)], FUN = as.numeric)
 # =================================== #
 bacen_dataset_bimonthly_sum = cumulative_transform('soma', 'bimestral', bacen_dataset[c(1:4)], TRUE)
 bacen_dataset_bimonthly_end = cumulative_transform('periodo_final', 'bimestral', bacen_dataset[c(1, 5:8, 11)], TRUE)
-bacen_dataset_bimonthly_cum = cumulative_transform('acumulado', 'bimestral', bacen_dataset[c(1, 10)], TRUE)
+bacen_dataset_bimonthly_cum = cumulative_transform('tx_acumulada', 'bimestral', bacen_dataset[c(1, 10)], TRUE)
 bacen_dataset_bimonthly_med = cumulative_transform('media', 'bimestral', bacen_dataset[c(1, 9)], TRUE)
 bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly_sum, y = bacen_dataset_bimonthly_end, by = 'data')
 bacen_dataset_bimonthly = left_join(x = bacen_dataset_bimonthly, y = bacen_dataset_bimonthly_cum, by = 'data')
