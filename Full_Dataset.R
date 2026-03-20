@@ -108,8 +108,8 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_full_dataset.xlsx', overwrite
 # ================ #
 # === Cleasing === #
 # ================ #
-patterns = c('^invest')
-for(i in patterns){
-  rm(list = ls(pattern = patterns))
+patterns = c('^invest', '^bacen', '^ipeadata')
+for(i in seq_along(patterns)){
+  rm(list = ls(pattern = patterns[i]))
 }
 rm(patterns, i)
