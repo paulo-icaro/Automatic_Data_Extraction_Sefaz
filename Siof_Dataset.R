@@ -8,8 +8,7 @@
 # ================= #
 # === Libraries === #
 # ================= #
-source('https://raw.githubusercontent.com/paulo-icaro/Ipeadata_API/refs/heads/main/Ipeadata_Query.R')
-source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Frequency_Transforming.R')
+#source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Frequency_Transforming.R')   # Package already loaded
 library(dplyr)
 library(tidyr)
 library(readxl)
@@ -110,7 +109,10 @@ invest_region_obras_bimonthly = invest_region_obras_bimonthly %>% rename_with(~p
 invest_region_total_bimonthly = invest_region_total_bimonthly %>% rename_with(~paste0(.x, '_total'), -data)
 
 # --- Joining Tables --- #
-invest_region_type_bimonthly = invest_region_equip_bimonthly %>% left_join(invest_region_obras_bimonthly, by = 'data') %>% left_join(invest_region_obras_bimonthly, by = 'data')
+invest_region_type_bimonthly =
+  invest_region_equip_bimonthly %>%
+  left_join(invest_region_obras_bimonthly, by = 'data') %>%
+  left_join(invest_region_total_bimonthly, by = 'data')
 
 
 
@@ -119,6 +121,16 @@ invest_region_type_bimonthly = invest_region_equip_bimonthly %>% left_join(inves
 # --------------------------------- #
 
 # --- Data Processing --- #
+invest_custeio = 
+  database_invest_funcao %>%
+  filter(categoria == 'pago_acumulado', tipo == 'CORRE') %>%
+  group_by(ano, mes) %>%
+  summarize(custeio = sum(valor)) %>%
+  select('ano', 'mes', 'custeio') %>%
+  ungroup() %>%
+  #pivot_wider(names_from = custeio, values_from = valor) %>%
+  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+
 invest_funcao = 
   database_invest_funcao %>%
   filter(categoria == 'pago_acumulado') %>%
@@ -171,6 +183,7 @@ invest_funcao_corre =
 
 
 # --- Bimonthly Series --- #
+invest_custeio_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_custeio[c(3:4)])
 invest_funcao_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_equip[c(3:35)])
 invest_funcao_equip_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_equip[c(3:35)])
 invest_funcao_obras_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_obras[c(3:34)])
@@ -200,11 +213,15 @@ wb = createWorkbook(creator = 'Sefaz-CE')
 addWorksheet(wb = wb, sheetName = 'tempo')
 addWorksheet(wb = wb, sheetName = 'macro')
 addWorksheet(wb = wb, sheetName = 'funcao')
+addWorksheet(wb = wb, sheetName = 'funcao_type')
 addWorksheet(wb = wb, sheetName = 'regional')
-writeData(wb = wb, sheet = 'tempo', x = invest_funcao_bimonthly[c(1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'macro', x = invest_macro_bimonthly[c(-1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'funcao', x = invest_funcao_bimonthly[c(-1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'regional', x = invest_region_bimonthly[c(-1)], rowNames = FALSE)
+addWorksheet(wb = wb, sheetName = 'regional_type')
+writeData(wb = wb, sheet = 'tempo', x = invest_funcao_bimonthly %>% select(data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'macro', x = invest_macro_bimonthly %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'funcao', x = invest_funcao_bimonthly %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'funcao_type', x = invest_funcao_type_bimonthly %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'regional', x = invest_region_bimonthly %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'regional_type', x = invest_region_type_bimonthly %>% select(data), rowNames = FALSE)
 saveWorkbook(wb = wb, file = 'Databases/Outputs/db_investimentos.xlsx', overwrite = TRUE)
 
 
@@ -212,6 +229,8 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_investimentos.xlsx', overwrit
 # ================ #
 # === Cleasing === #
 # ================ #
-rm(invest_macro, invest_region_equip, invest_region_obras, invest_region_total, invest_funcao_equip, invest_funcao_obras, invest_funcao_total,
-   invest_funcao_corre, invest_region_equip_bimonthly, invest_region_obras_bimonthly, invest_region_total_bimonthly, invest_funcao_equip_bimonthly,
-   invest_funcao_obras_bimonthly, invest_funcao_total_bimonthly, invest_funcao_corre_bimonthly, database_invest_programa_regiao, database_invest_funcao, wb)
+rm(invest_macro, invest_region, invest_funcao, invest_custeio, database_invest_programa_regiao, database_invest_funcao, wb,
+   invest_region_equip, invest_region_obras, invest_region_total,
+   invest_funcao_equip, invest_funcao_obras, invest_funcao_total, invest_funcao_corre,
+   invest_region_equip_bimonthly, invest_region_obras_bimonthly, invest_region_total_bimonthly,
+   invest_funcao_equip_bimonthly, invest_funcao_obras_bimonthly, invest_funcao_total_bimonthly, invest_funcao_corre_bimonthly)
