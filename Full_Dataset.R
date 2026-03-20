@@ -22,9 +22,14 @@ library(dplyr)
 # ---------------------- #
 # --- Macro Database --- #
 # ---------------------- #
-macro_dataset_nominal = left_join(x = bacen_dataset_bimonthly, y = ipeadata_dataset_bimonthly, by = 'data')
-macro_dataset_nominal = left_join(x = macro_dataset_nominal, y = invest_macro_bimonthly, by = 'data')
-macro_dataset_current = macro_dataset_nominal
+macro_dataset_nominal = 
+  bacen_dataset_bimonthly %>%
+  left_join(y = ipeadata_dataset_bimonthly, by = 'data') %>%
+  left_join(y = invest_macro_bimonthly, by = 'data') %>%
+  left_join(y = invest_custeio_bimonthly, by = 'data')
+macro_dataset_nominal = rename_with(macro_dataset_nominal, tolower)   # Renaming columns
+macro_dataset_real = macro_dataset_nominal
+
 
 # ------------------------- #
 # --- Regional Database --- #
@@ -39,30 +44,30 @@ funcao_dataset_nominal = left_join(x = invest_funcao_type_bimonthly, y = ipeadat
 
 
 # ================================ #
-# === Nominal do Current Value === #
+# === Nominal do Actual Values === #
 # ================================ #
 
 # ---------------------- #
 # --- Macro Database --- #
 # ---------------------- #
-macro_dataset_current =
-  macro_dataset_current %>%
-  mutate(across(c(importacao, exportacao, credito_pf, credito_pj, saldo_oper_cred, EQUIP, OBRAS, TOTAL), ~ .x/ipca * 100))
+macro_dataset_real =
+  macro_dataset_real %>%
+  mutate(across(c(importacao, exportacao, credito_pf, credito_pj, saldo_oper_cred, equip, obras, total, custeio), ~ .x/ipca * 100))
   
 
-macro_dataset_current$importacao = macro_dataset_nominal$importacao/macro_dataset_nominal$ipca * 100
-macro_dataset_current$exportacao = macro_dataset_nominal$exportacao/macro_dataset_nominal$ipca * 100
-macro_dataset_current$credito_pf = macro_dataset_nominal$credito_pf/macro_dataset_nominal$ipca * 100
-macro_dataset_current$credito_pj = macro_dataset_nominal$credito_pj/macro_dataset_nominal$ipca * 100
-macro_dataset_current$saldo_oper_cred = macro_dataset_nominal$saldo_oper_cred/macro_dataset_nominal$ipca * 100
-macro_dataset_current$EQUIP = macro_dataset_nominal$EQUIP/macro_dataset_nominal$ipca*100
-macro_dataset_current$OBRAS = macro_dataset_nominal$OBRAS/macro_dataset_nominal$ipca*100
-macro_dataset_current$TOTAL = macro_dataset_nominal$TOTAL/macro_dataset_nominal$ipca*100
+# macro_dataset_real$importacao = macro_dataset_nominal$importacao/macro_dataset_nominal$ipca * 100
+# macro_dataset_real$exportacao = macro_dataset_nominal$exportacao/macro_dataset_nominal$ipca * 100
+# macro_dataset_real$credito_pf = macro_dataset_nominal$credito_pf/macro_dataset_nominal$ipca * 100
+# macro_dataset_real$credito_pj = macro_dataset_nominal$credito_pj/macro_dataset_nominal$ipca * 100
+# macro_dataset_real$saldo_oper_cred = macro_dataset_nominal$saldo_oper_cred/macro_dataset_nominal$ipca * 100
+# macro_dataset_real$EQUIP = macro_dataset_nominal$EQUIP/macro_dataset_nominal$ipca*100
+# macro_dataset_real$OBRAS = macro_dataset_nominal$OBRAS/macro_dataset_nominal$ipca*100
+# macro_dataset_real$TOTAL = macro_dataset_nominal$TOTAL/macro_dataset_nominal$ipca*100
 
 # ------------------------- #
 # --- Regional Database --- #
 # ------------------------- #
-regional_dataset_nominal =
+regional_dataset_real =
   regional_dataset_nominal %>%
   mutate(across(-c(ipca, data), ~ .x/ipca*100))
   
@@ -70,7 +75,7 @@ regional_dataset_nominal =
 # ------------------------- #
 # --- Function Database --- #
 # ------------------------- #
-funcao_dataset_nominal =
+funcao_dataset_real =
   funcao_dataset_nominal %>%
   mutate(across(-c(ipca, data), ~ .x/ipca*100))
 
@@ -81,13 +86,30 @@ funcao_dataset_nominal =
 # ======================= #
 wb = createWorkbook(creator = 'Sefaz-CE')
 addWorksheet(wb = wb, sheetName = 'tempo')
-addWorksheet(wb = wb , sheetName = 'macro_current')
-addWorksheet(wb = wb , sheetName = 'macro_nominal')
-addWorksheet(wb = wb , sheetName = 'funcao')
-addWorksheet(wb = wb , sheetName = 'regional')
+addWorksheet(wb = wb , sheetName = 'macro_dataset_real')
+addWorksheet(wb = wb , sheetName = 'regional_dataset_real')
+addWorksheet(wb = wb , sheetName = 'funcao_dataset_real')
+addWorksheet(wb = wb , sheetName = 'macro_dataset_nominal')
+addWorksheet(wb = wb , sheetName = 'regional_dataset_nominal')
+addWorksheet(wb = wb , sheetName = 'funcao_dataset_nominal')
+
 writeData(wb = wb, sheet = 'tempo', x = macro_dataset_nominal[c(1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'macro_current', x = macro_dataset_current[c(-1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'macro_nominal', x = macro_dataset_nominal[c(-1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'funcao', x = invest_funcao_bimonthly[c(-1)], rowNames = FALSE)
-writeData(wb = wb, sheet = 'regional', x = invest_region_bimonthly[c(-1)], rowNames = FALSE)
+writeData(wb = wb, sheet = 'macro_dataset_real', x = macro_dataset_real %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'macro_dataset_nominal', x = macro_dataset_nominal %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'regional_dataset_real', x = regional_dataset_real %>% select(-data, - ipca), rowNames = FALSE)
+writeData(wb = wb, sheet = 'regional_dataset_nominal', x = regional_dataset_nominal %>% select(-data), rowNames = FALSE)
+writeData(wb = wb, sheet = 'funcao_dataset_real', x = funcao_dataset_real %>% select(-data, - ipca), rowNames = FALSE)
+writeData(wb = wb, sheet = 'funcao_dataset_nominal', x = funcao_dataset_nominal %>% select(-data), rowNames = FALSE)
+
 saveWorkbook(wb = wb, file = 'Databases/Outputs/db_full_dataset.xlsx', overwrite = TRUE)
+
+
+
+# ================ #
+# === Cleasing === #
+# ================ #
+patterns = c('^invest')
+for(i in patterns){
+  rm(list = ls(pattern = patterns))
+}
+rm(patterns, i)
