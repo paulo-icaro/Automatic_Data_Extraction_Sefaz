@@ -77,3 +77,9 @@ writeData(wb = wb, sheet = 'tempo', x = icms_macro_bimonthly %>% select(data), r
 writeData(wb = wb, sheet = 'icms_macro', x = icms_macro_bimonthly %>% select(-data), rowNames = FALSE)
 writeData(wb = wb, sheet = 'icms_regiao', x = icms_region_bimonthly %>% select(-data), rowNames = FALSE)
 saveWorkbook(wb = wb, file = 'Databases/Outputs/db_icms.xlsx', overwrite = TRUE)
+
+
+# ================ #
+# === Cleasing === #
+# ================ #
+rm(database_icms, icms_macro, icms_region)

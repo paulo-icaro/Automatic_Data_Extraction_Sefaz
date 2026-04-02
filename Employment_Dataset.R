@@ -75,3 +75,10 @@ writeData(wb = wb, sheet = 'tempo', x = employments_macro_bimonthly %>% select(d
 writeData(wb = wb, sheet = 'empregos_macro', x = employments_macro_bimonthly %>% select(-data), rowNames = FALSE)
 writeData(wb = wb, sheet = 'empregos_regiao', x = employments_region_bimonthly %>% select(-data), rowNames = FALSE)
 saveWorkbook(wb = wb, file = 'Databases/Outputs/db_empregos.xlsx', overwrite = TRUE)
+
+
+
+# ================= #
+# === Cleansing === #
+# ================= #
+rm(database_employment, employments_macro, employments_region)
