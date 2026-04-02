@@ -65,8 +65,8 @@ writeData(wb = wb, sheet = 'db_ipeadata_original', x = ipeadata_dataset, rowName
 saveWorkbook(wb = wb, file = 'Databases/Outputs/db_ipeadata.xlsx', overwrite = TRUE)
 
 
-# =============== #
-# === Limpeza === #
-# =============== #
+# ================ #
+# === Cleasing === #
+# ================ #
 rm(cod_ipeadata_series, name_ipeadata_series, periodo, wb, ipeadata_dataset,
    ipeadata_dataset_bimonthly_sum, ipeadata_dataset_bimonthly_end)
