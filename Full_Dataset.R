@@ -11,6 +11,8 @@
 source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Bacen_Dataset.R')
 source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Ipeadata_Dataset.R')
 source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Siof_Dataset.R')
+source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Employment_Dataset.R')
+source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/ICMS_Dataset.R')
 library(dplyr)
 
 
@@ -26,7 +28,9 @@ macro_dataset_nominal =
   bacen_dataset_bimonthly %>%
   left_join(y = ipeadata_dataset_bimonthly, by = 'data') %>%
   left_join(y = invest_macro_bimonthly, by = 'data') %>%
-  left_join(y = invest_custeio_bimonthly, by = 'data')
+  left_join(y = invest_custeio_bimonthly, by = 'data') %>%
+  left_join(y = employments_macro_bimonthly, by = 'data') %>%
+  left_join(y = icms_macro_bimonthly, by = 'data')
 macro_dataset_nominal = rename_with(macro_dataset_nominal, tolower)   # Renaming columns
 macro_dataset_real = macro_dataset_nominal
 
@@ -34,12 +38,17 @@ macro_dataset_real = macro_dataset_nominal
 # ------------------------- #
 # --- Regional Database --- #
 # ------------------------- #
-regional_dataset_nominal = left_join(x = invest_region_type_bimonthly, y = ipeadata_dataset_bimonthly %>% select(data, ipca), by = 'data')
+regional_dataset_nominal =
+  invest_region_type_bimonthly %>%
+  left_join(y = ipeadata_dataset_bimonthly %>% select(data, ipca), by = 'data') %>%
+  left_join(y = employments_region_bimonthly, by = 'data') %>%
+  left_join(y = icms_region_bimonthly, by = 'data')
 
 # ------------------------- #
 # --- Function Database --- #
 # ------------------------- #
-funcao_dataset_nominal = left_join(x = invest_funcao_type_bimonthly, y = ipeadata_dataset_bimonthly %>% select(data, ipca), by = 'data')
+funcao_dataset_nominal = 
+  left_join(x = invest_funcao_type_bimonthly, y = ipeadata_dataset_bimonthly %>% select(data, ipca), by = 'data')
 
 
 
@@ -52,24 +61,15 @@ funcao_dataset_nominal = left_join(x = invest_funcao_type_bimonthly, y = ipeadat
 # ---------------------- #
 macro_dataset_real =
   macro_dataset_real %>%
-  mutate(across(c(importacao, exportacao, credito_pf, credito_pj, saldo_oper_cred, equip, obras, total, custeio), ~ .x/ipca * 100))
-  
+  mutate(across(c(importacao, exportacao, credito_pf, credito_pj, saldo_oper_cred, equip, obras, total, custeio, icms), ~ .x/ipca * 100))
 
-# macro_dataset_real$importacao = macro_dataset_nominal$importacao/macro_dataset_nominal$ipca * 100
-# macro_dataset_real$exportacao = macro_dataset_nominal$exportacao/macro_dataset_nominal$ipca * 100
-# macro_dataset_real$credito_pf = macro_dataset_nominal$credito_pf/macro_dataset_nominal$ipca * 100
-# macro_dataset_real$credito_pj = macro_dataset_nominal$credito_pj/macro_dataset_nominal$ipca * 100
-# macro_dataset_real$saldo_oper_cred = macro_dataset_nominal$saldo_oper_cred/macro_dataset_nominal$ipca * 100
-# macro_dataset_real$EQUIP = macro_dataset_nominal$EQUIP/macro_dataset_nominal$ipca*100
-# macro_dataset_real$OBRAS = macro_dataset_nominal$OBRAS/macro_dataset_nominal$ipca*100
-# macro_dataset_real$TOTAL = macro_dataset_nominal$TOTAL/macro_dataset_nominal$ipca*100
 
 # ------------------------- #
 # --- Regional Database --- #
 # ------------------------- #
 regional_dataset_real =
   regional_dataset_nominal %>%
-  mutate(across(-c(ipca, data), ~ .x/ipca*100))
+  mutate(across(-c(ipca, data, ends_with('_empregos')), ~ .x/ipca*100))
   
 
 # ------------------------- #
@@ -108,7 +108,7 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_full_dataset.xlsx', overwrite
 # ================ #
 # === Cleasing === #
 # ================ #
-patterns = c('^invest', '^bacen', '^ipeadata')
+patterns = c('^invest', '^bacen', '^ipeadata', 'employments', 'icms')
 for(i in seq_along(patterns)){
   rm(list = ls(pattern = patterns[i]))
 }
