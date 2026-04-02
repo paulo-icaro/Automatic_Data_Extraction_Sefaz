@@ -44,7 +44,6 @@ employments_macro =
 employments_macro_bimonthly = cumulative_transform('periodo_final', 'bimestral', employments_macro)
 
 
-
 # -------------------------- #
 # --- Employments Region --- #
 # -------------------------- #
@@ -58,10 +57,9 @@ employments_region =
   pivot_wider(names_from = regiao, values_from = empregos)
   
   
-
 # --- Bimonthly Series --- #
 employments_region_bimonthly = cumulative_transform('periodo_final', 'bimestral', employments_region)
-
+colnames(employments_region_bimonthly)[-1] = paste0(colnames(employments_region_bimonthly)[-1], '_empregos')
 
 
 # ======================= #

@@ -63,7 +63,7 @@ icms_region =
 
 # --- Bimonthly Series --- #
 icms_region_bimonthly = cumulative_transform('soma', 'bimestral', icms_region)
-
+colnames(icms_region_bimonthly)[-1] = paste0(colnames(icms_region_bimonthly)[-1], '_icms')
 
 
 # ======================= #
