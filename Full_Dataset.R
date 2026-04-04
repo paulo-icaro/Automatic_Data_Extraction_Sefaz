@@ -110,8 +110,8 @@ saveWorkbook(wb = wb, file = 'Databases/Outputs/db_full_dataset.xlsx', overwrite
 # ================ #
 # === Cleasing === #
 # ================ #
-patterns = c('^invest', '^bacen', '^ipeadata', 'employments', 'icms')
+patterns = c('^invest', '^bacen', '^ipeadata', 'employments', 'icms', 'siconfi')
 for(i in seq_along(patterns)){
   rm(list = ls(pattern = patterns[i]))
 }
-rm(patterns, i)
+rm(patterns, i, divida_consolidada_liquida, resultado_previdenciario, resultado_primario, state_municipalities)
