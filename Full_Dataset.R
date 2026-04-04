@@ -13,6 +13,7 @@ source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_
 source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Siof_Dataset.R')
 source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Employment_Dataset.R')
 source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/ICMS_Dataset.R')
+source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Siconfi_Dataset.R')
 library(dplyr)
 
 
@@ -30,7 +31,8 @@ macro_dataset_nominal =
   left_join(y = invest_macro_bimonthly, by = 'data') %>%
   left_join(y = invest_custeio_bimonthly, by = 'data') %>%
   left_join(y = employments_macro_bimonthly, by = 'data') %>%
-  left_join(y = icms_macro_bimonthly, by = 'data')
+  left_join(y = icms_macro_bimonthly, by = 'data') %>%
+  left_join(y = siconfi_macro_bimonthly, by = 'data')
 macro_dataset_nominal = rename_with(macro_dataset_nominal, tolower)   # Renaming columns
 macro_dataset_real = macro_dataset_nominal
 
@@ -53,7 +55,7 @@ funcao_dataset_nominal =
 
 
 # ================================ #
-# === Nominal do Actual Values === #
+# === Nominal to Actual Values === #
 # ================================ #
 
 # ---------------------- #
@@ -61,7 +63,7 @@ funcao_dataset_nominal =
 # ---------------------- #
 macro_dataset_real =
   macro_dataset_real %>%
-  mutate(across(c(importacao, exportacao, credito_pf, credito_pj, saldo_oper_cred, equip, obras, total, custeio, icms), ~ .x/ipca * 100))
+  mutate(across(c(importacao, exportacao, credito_pf, credito_pj, saldo_oper_cred, equip, obras, total, custeio, icms, div_cons, res_prev, res_prim, res_prim_prev, inv_mun), ~ .x/ipca * 100))
 
 
 # ------------------------- #
