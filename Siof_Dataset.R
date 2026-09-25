@@ -5,232 +5,127 @@
 # --- Script by Paulo Icaro --- #
 
 
-# ================= #
-# === Libraries === #
-# ================= #
-#source('https://raw.githubusercontent.com/paulo-icaro/Automatic_Data_Extraction_Sefaz/refs/heads/main/Frequency_Transforming.R')   # Package already loaded
+# =================== #
+# === Bibliotecas === #
+# =================== #
+source('https://raw.githubusercontent.com/paulo-icaro/Variables_Frequency_Transforming/refs/heads/main/variables_frequency_transforming.R')    # Package already loaded
 library(dplyr)
 library(tidyr)
 library(readxl)
 library(openxlsx)
 library(lubridate)
 
-
-# ======================= #
-# === Data Processing === #
-# ======================= #
-
-# --- Previous Info --- #
+# --- Path Auxiliar --- #
 path = 'Databases/Inputs/'
 
-
-# --- Main Databases --- #
-database_invest_programa_regiao = read_excel(path = paste0(path, 'investimentos_siof_ceara_programa_regiao.xlsx'))
+# --- Bases Iniciais --- #
+database_invest_program_regiao = read_excel(path = paste0(path, 'investimentos_siof_ceara_programa_regiao.xlsx'))
 database_invest_funcao = read_excel(path = paste0(path, 'investimentos_siof_ceara_funcao.xlsx'))
 
 
-# ------------------------- #
-# --- Investments Macro --- #
-# ------------------------- #
+# ========================= #
+# === Funções Auxliares === #
+# ========================= #
 
-# --- Data Processing --- #
-invest_macro = 
-  database_invest_programa_regiao %>% 
-  filter(categoria == 'pago_acumulado', ano != '2012') %>%
-  group_by(ano, mes, tipo) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'tipo', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = tipo, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+# ----------------------------------- #
+# --- Transformação de Frequência --- #
+# ----------------------------------- #
+bim_transform = function(df, vars_group){
+  cumulative_transform(
+    transform_type = 'diff_acumulado',
+    frequency = 'bimestral',
+    dataset = df,
+    groupby_variables = vars_group)
+}
 
-
-# --- Bimonthly Series --- #
-invest_macro_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_macro[c(3:6)])
-
-
+# ----------------------------------------------- #
+# --- Processamento de Dados - Investimentos ---- #
+# ----------------------------------------------- #
+process_invest = function(df, group_vars, min_year = 2015){
+  df |> 
+    filter(categoria == 'pago_acumulado', ano >= min_year) |> 
+    group_by(across(all_of(group_vars))) |> 
+    summarize(valor = sum(valor), .groups = 'drop') |> 
+    mutate(data = as.character.Date(paste0(ano, '-', mes, '-01')))
+}
 
 # ------------------------------ #
-# --- Investments per Region --- #
+# --- Matricizacao dos Dados --- #
 # ------------------------------ #
-
-# --- Data Processing --- #
-invest_region = 
-  database_invest_programa_regiao %>% 
-  filter(categoria == 'pago_acumulado', ano != '2012') %>%
-  group_by(ano, mes, regiao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'regiao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = regiao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
-
-
-invest_region_equip = 
-  database_invest_programa_regiao %>% 
-  filter(categoria == 'pago_acumulado', ano != '2012', tipo == 'EQUIP') %>%
-  group_by(ano, mes, regiao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'regiao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = regiao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
-
-invest_region_obras = 
-  database_invest_programa_regiao %>% 
-  filter(categoria == 'pago_acumulado', ano != '2012', tipo == 'OBRAS') %>%
-  group_by(ano, mes, regiao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'regiao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = regiao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
-
-invest_region_total = 
-  database_invest_programa_regiao %>% 
-  filter(categoria == 'pago_acumulado', ano != '2012', tipo == 'TOTAL') %>%
-  group_by(ano, mes, regiao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'regiao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = regiao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
-
-
-# --- Bimonthly Series --- #
-invest_region_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_region[c(3:18)])
-invest_region_equip_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_region_equip[c(3:18)])
-invest_region_obras_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_region_obras[c(3:18)])
-invest_region_total_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_region_total[c(3:18)])
-
-# --- Renaming --- #
-invest_region_equip_bimonthly = invest_region_equip_bimonthly %>% rename_with(~paste0(.x, '_equip'), -data)
-invest_region_obras_bimonthly = invest_region_obras_bimonthly %>% rename_with(~paste0(.x, '_obras'), -data)
-invest_region_total_bimonthly = invest_region_total_bimonthly %>% rename_with(~paste0(.x, '_total'), -data)
-
-# --- Joining Tables --- #
-invest_region_type_bimonthly =
-  invest_region_equip_bimonthly %>%
-  left_join(invest_region_obras_bimonthly, by = 'data') %>%
-  left_join(invest_region_total_bimonthly, by = 'data')
+pivotting = function(df, name_var = 'tipo', value_valor = 'valor'){
+  pivot_wider(df, names_from = name_var, values_from = value_valor)
+}
 
 
 
-# --------------------------------- #
-# --- Investiments per Function --- #
-# --------------------------------- #
+# ======================================================================== #
+# === Processamento de Dados - Investimentos Publicos por Tipo - Macro === #
+# ======================================================================== #
 
-# --- Data Processing --- #
-invest_custeio = 
-  database_invest_funcao %>%
-  filter(categoria == 'pago_acumulado', tipo == 'CORRE') %>%
-  group_by(ano, mes) %>%
-  summarize(custeio = sum(valor)) %>%
-  select('ano', 'mes', 'custeio') %>%
-  ungroup() %>%
-  #pivot_wider(names_from = custeio, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+# ---------------------- #
+# --- Processamentos --- #
+# ---------------------- #
+invest_program_tipo_macro_t          = process_invest(df = database_invest_program_regiao, group_vars = c('ano', 'mes', 'tipo'), min_year =  2016)
+invest_program_tipo_program_t        = process_invest(df = database_invest_program_regiao, group_vars = c('ano', 'mes', 'tipo', 'programa'), min_year = 2016)
+invest_program_tipo_regiao_t         = process_invest(df = database_invest_program_regiao, group_vars = c('ano', 'mes', 'tipo', 'regiao'), min_year = 2016)
+invest_program_tipo_regiao_program_t = process_invest(df = database_invest_program_regiao, group_vars = c('ano', 'mes', 'tipo', 'regiao', 'programa'), min_year = 2016)
+invest_funcao_tipo_macro_t           = process_invest(df = database_invest_funcao, group_vars = c('ano', 'mes', 'tipo'), min_year =  2016)
+invest_funcao_tipo_funcao_t          = process_invest(df = database_invest_funcao, group_vars = c('ano', 'mes', 'tipo', 'funcao'), min_year =  2016)
 
-invest_funcao = 
-  database_invest_funcao %>%
-  filter(categoria == 'pago_acumulado') %>%
-  group_by(ano, mes, funcao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'funcao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = funcao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+# ----------------------------------- #
+# --- Transformacao de Frequencia --- #
+# ----------------------------------- #
+invest_program_tipo_macro_bim_t          = bim_transform(invest_program_tipo_macro_t[,3:5], c('tipo'))
+invest_program_tipo_program_bim_t        = bim_transform(invest_program_tipo_program_t[,3:6], c('tipo', 'programa'))
+invest_program_tipo_regiao_bim_t         = bim_transform(invest_program_tipo_regiao_t[,3:6], c('regiao', 'tipo'))
+invest_program_tipo_regiao_program_bim_t = bim_transform(invest_program_tipo_regiao_program_t[,3:7], c('regiao','programa','tipo'))
+invest_funcao_tipo_macro_bim_t           = bim_transform(invest_funcao_tipo_macro_t[,3:5], c('tipo'))
+invest_funcao_tipo_funcao_bim_t          = bim_transform(invest_funcao_tipo_funcao_t[,3:6], c('tipo','funcao'))
 
-invest_funcao_equip = 
-  database_invest_funcao %>%
-  filter(categoria == 'pago_acumulado', tipo == 'EQUIP') %>%
-  group_by(ano, mes, funcao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'funcao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = funcao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+# ----------------------------- #
+# --- Matricizando os Dados --- #
+# ----------------------------- #
+invest_program_tipo_macro_bim_m          = pivotting(invest_program_tipo_macro_bim_t)
+invest_program_tipo_program_bim_m        = pivotting(invest_program_tipo_program_bim_t)
+invest_program_tipo_regiao_bim_m         = pivotting(invest_program_tipo_regiao_bim_t)
+invest_program_tipo_regiao_program_bim_m = pivotting(invest_program_tipo_regiao_program_bim_t)
+invest_funcao_tipo_macro_bim_m           = pivotting(invest_funcao_tipo_macro_bim_t)
+invest_funcao_tipo_funcao_bim_m          = pivotting(invest_funcao_tipo_funcao_bim_t)
 
-invest_funcao_obras = 
-  database_invest_funcao %>%
-  filter(categoria == 'pago_acumulado', tipo == 'OBRAS') %>%
-  group_by(ano, mes, funcao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'funcao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = funcao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+                                             
 
-invest_funcao_total = 
-  database_invest_funcao %>%
-  filter(categoria == 'pago_acumulado', tipo == 'TOTAL') %>%
-  group_by(ano, mes, funcao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'funcao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = funcao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+# ==================================== #
+# === Armazenamento dos Resultados === #
+# ==================================== #
 
-invest_funcao_corre = 
-  database_invest_funcao %>%
-  filter(categoria == 'pago_acumulado', tipo == 'CORRE') %>%
-  group_by(ano, mes, funcao) %>%
-  summarize(valor = sum(valor)) %>%
-  select('ano', 'mes', 'funcao', 'valor') %>%
-  ungroup() %>%
-  pivot_wider(names_from = funcao, values_from = valor) %>%
-  mutate(data = as.Date(paste0(ano, '-', mes, '-01')))
+# --- Pre Definicoes --- #
+save_path = c('Databases/Outputs/Tableau/db_siof_tableau', 'Databases/Outputs/Matlab/db_siof_matlab')
+formato = c('tableau', 'matlab')
+aba = c('progr_tipo_macro', 'progr_tipo_programa', 'progr_tipo_regiao', 'progr_tipo_regiao_programa', 'func_tipo_macro', 'func_tipo_funcao')
+dataframe = list(
+  tableau = list(invest_program_tipo_macro_bim_t, invest_program_tipo_program_bim_t, invest_program_tipo_regiao_bim_t,
+                   invest_program_tipo_regiao_program_bim_t, invest_funcao_tipo_macro_bim_t, invest_funcao_tipo_funcao_bim_t),
+  matlab = list(invest_program_tipo_macro_bim_m, invest_program_tipo_program_bim_m, invest_program_tipo_regiao_bim_m,
+                  invest_program_tipo_regiao_program_bim_m, invest_funcao_tipo_macro_bim_m, invest_funcao_tipo_funcao_bim_m))
 
-
-# --- Bimonthly Series --- #
-invest_custeio_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_custeio[c(3:4)])
-invest_funcao_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_equip[c(3:35)])
-invest_funcao_equip_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_equip[c(3:35)])
-invest_funcao_obras_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_obras[c(3:34)])
-invest_funcao_total_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_total[c(3:36)])
-invest_funcao_corre_bimonthly = cumulative_transform('diff_acumulado', 'bimestral', invest_funcao_corre[c(3:40)])
-
-# --- Renaming --- #
-invest_funcao_equip_bimonthly = invest_funcao_equip_bimonthly %>% rename_with(~paste0(.x, '_equip'), -data)
-invest_funcao_obras_bimonthly = invest_funcao_obras_bimonthly %>% rename_with(~paste0(.x, '_obras'), -data)
-invest_funcao_total_bimonthly = invest_funcao_total_bimonthly %>% rename_with(~paste0(.x, '_total'), -data)
-invest_funcao_corre_bimonthly = invest_funcao_corre_bimonthly %>% rename_with(~paste0(.x, '_corre'), -data)
-
-# --- Joining Tables --- #
-invest_funcao_type_bimonthly =
-  invest_funcao_equip_bimonthly %>%
-  left_join(invest_funcao_obras_bimonthly, by = 'data') %>%
-  left_join(invest_funcao_total_bimonthly, by = 'data') %>%
-  left_join(invest_funcao_corre_bimonthly, by = 'data')
+# --- Armazenamento --- #
+for(f in seq_along(formato)){
+  wb = createWorkbook(creator = 'Sefaz-CE')
+  for(s in seq_along(aba)){
+    addWorksheet(wb = wb, sheetName = aba[s])
+    writeData(wb = wb, sheet = aba[s], x = as.data.frame(dataframe[[f]][s]), rowNames = FALSE, colNames = TRUE)
+  }
+  if(formato[f] == 'matlab'){
+    addWorksheet(wb = wb, sheetName = 'tempo')
+    writeData(wb = wb, sheet = 'tempo', as.numeric(invest_program_tipo_macro_bim_m$data) + 25569, rowNames = FALSE)
+  }
+  saveWorkbook(wb = wb, file = paste0(save_path[f], '.xlsx'), overwrite = TRUE)
+}
 
 
 
-
-# ======================= #
-# === Storing Results === #
-# ======================= #
-wb = createWorkbook(creator = 'Sefaz-CE')
-addWorksheet(wb = wb, sheetName = 'tempo')
-addWorksheet(wb = wb, sheetName = 'macro')
-addWorksheet(wb = wb, sheetName = 'funcao')
-addWorksheet(wb = wb, sheetName = 'funcao_type')
-addWorksheet(wb = wb, sheetName = 'regional')
-addWorksheet(wb = wb, sheetName = 'regional_type')
-writeData(wb = wb, sheet = 'tempo', x = invest_funcao_bimonthly %>% select(data), rowNames = FALSE)
-writeData(wb = wb, sheet = 'macro', x = invest_macro_bimonthly %>% select(-data), rowNames = FALSE)
-writeData(wb = wb, sheet = 'funcao', x = invest_funcao_bimonthly %>% select(-data), rowNames = FALSE)
-writeData(wb = wb, sheet = 'funcao_type', x = invest_funcao_type_bimonthly %>% select(-data), rowNames = FALSE)
-writeData(wb = wb, sheet = 'regional', x = invest_region_bimonthly %>% select(-data), rowNames = FALSE)
-writeData(wb = wb, sheet = 'regional_type', x = invest_region_type_bimonthly %>% select(data), rowNames = FALSE)
-saveWorkbook(wb = wb, file = 'Databases/Outputs/db_investimentos.xlsx', overwrite = TRUE)
-
-
-
-# ================ #
-# === Cleasing === #
-# ================ #
-rm(invest_macro, invest_region, invest_funcao, invest_custeio, database_invest_programa_regiao, database_invest_funcao, wb,
-   invest_region_equip, invest_region_obras, invest_region_total,
-   invest_funcao_equip, invest_funcao_obras, invest_funcao_total, invest_funcao_corre,
-   invest_region_equip_bimonthly, invest_region_obras_bimonthly, invest_region_total_bimonthly,
-   invest_funcao_equip_bimonthly, invest_funcao_obras_bimonthly, invest_funcao_total_bimonthly, invest_funcao_corre_bimonthly)
+# =============== #
+# === Limpeza === #
+# =============== #
+rm(list = ls(pattern = '^invest|^database'))
+rm(path, wb, f, s, formato, aba, save_path, dataframe, pivotting, process_invest, bim_transform)
