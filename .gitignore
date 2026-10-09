@@ -1,6 +1,5 @@
 .Rproj.user
 .Rhistory
-.RData
 .Ruserdata
 *.xlsx
-/home/pauloicaro/Documentos/Repositorios/Automatic_Data_Extraction_Sefaz/Databases/RData/R_Dados_ICMS_Producao.RData
+Databases/RData/R_Dados_ICMS_Producao.RData
