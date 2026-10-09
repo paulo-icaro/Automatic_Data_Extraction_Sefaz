@@ -28,64 +28,62 @@ database_invest_funcao = read_excel(path = paste0(path, 'investimentos_siof_cear
 # === Funções Auxliares === #
 # ========================= #
 
+# ----------------------------------------------- #
+# --- Processamento de Dados - Investimentos ---- #
+# ----------------------------------------------- #
+process_invest = function(df, group_var, min_year = 2015){
+  df |> 
+    filter(categoria == 'pago_acumulado', ano >= min_year) |> 
+    group_by(across(all_of(group_var))) |> 
+    summarize(valor = sum(valor), .groups = 'drop') |> 
+    mutate(data = as.character.Date(paste0(ano, '-', mes, '-01')))
+}
+
 # ----------------------------------- #
 # --- Transformação de Frequência --- #
 # ----------------------------------- #
-bim_transform = function(df, vars_group){
+bim_transform = function(df, group_var){
   cumulative_transform(
     transform_type = 'diff_acumulado',
     frequency = 'bimestral',
     dataset = df,
-    groupby_variables = vars_group)
-}
-
-# ----------------------------------------------- #
-# --- Processamento de Dados - Investimentos ---- #
-# ----------------------------------------------- #
-process_invest = function(df, group_vars, min_year = 2015){
-  df |> 
-    filter(categoria == 'pago_acumulado', ano >= min_year) |> 
-    group_by(across(all_of(group_vars))) |> 
-    summarize(valor = sum(valor), .groups = 'drop') |> 
-    mutate(data = as.character.Date(paste0(ano, '-', mes, '-01')))
+    groupby_variables = group_var)
 }
 
 # ------------------------------ #
 # --- Matricizacao dos Dados --- #
 # ------------------------------ #
-pivotting = function(df, name_var = 'tipo', value_valor = 'valor'){
-  pivot_wider(df, names_from = name_var, values_from = value_valor)
+pivotting = function(df, var_names = 'tipo', values = 'valor'){
+  pivot_wider(df, names_from = var_names, values_from = values)
 }
 
 
 
-# ======================================================================== #
-# === Processamento de Dados - Investimentos Publicos por Tipo - Macro === #
-# ======================================================================== #
-
+# ============================== #
+# === Processamento de Dados === #
+# ============================== #
 
 # ---------------------------------------------------- #
 # --- Processamentos e Transformacao de Frequencia --- #
 # ---------------------------------------------------- #
-invest_programa_tipo_bim                 = bim_transform(process_invest(df = database_invest_programa_regiao, group_vars = c('ano', 'mes', 'tipo'), min_year =  2016)[,3:5], c('tipo'))
-invest_programa_regiao_bim               = bim_transform(process_invest(df = database_invest_programa_regiao, group_vars = c('ano', 'mes', 'regiao'), min_year = 2016)[,3:5], c('regiao'))
-invest_programa_tipo_regiao_bim          = bim_transform(process_invest(df = database_invest_programa_regiao, group_vars = c('ano', 'mes', 'tipo', 'regiao'), min_year = 2016)[,3:6], c('tipo', 'regiao'))
-invest_programa_tipo_regiao_programa_bim = bim_transform(process_invest(df = database_invest_programa_regiao, group_vars = c('ano', 'mes', 'tipo', 'regiao', 'programa'), min_year = 2016)[,3:7], c('tipo', 'regiao', 'programa'))
-invest_funcao_tipo_bim                   = bim_transform(process_invest(df = database_invest_funcao, group_vars = c('ano', 'mes', 'tipo'), min_year =  2016)[,3:5], c('tipo'))
-invest_funcao_funcao_bim                 = bim_transform(process_invest(df = database_invest_funcao, group_vars = c('ano', 'mes', 'funcao'), min_year =  2016)[,3:5], c('funcao'))
-invest_funcao_tipo_funcao_bim            = bim_transform(process_invest(df = database_invest_funcao, group_vars = c('ano', 'mes', 'tipo', 'funcao'), min_year =  2016)[,3:6], c('tipo','funcao'))
+invest_programa_tipo_bim                 = bim_transform(process_invest(df = database_invest_programa_regiao, group_var = c('ano', 'mes', 'tipo'), min_year =  2016)[,3:5], c('tipo'))
+invest_programa_regiao_bim               = bim_transform(process_invest(df = database_invest_programa_regiao, group_var = c('ano', 'mes', 'regiao'), min_year = 2016)[,3:5], c('regiao'))
+invest_programa_tipo_regiao_bim          = bim_transform(process_invest(df = database_invest_programa_regiao, group_var = c('ano', 'mes', 'tipo', 'regiao'), min_year = 2016)[,3:6], c('tipo', 'regiao'))
+invest_programa_tipo_regiao_programa_bim = bim_transform(process_invest(df = database_invest_programa_regiao, group_var = c('ano', 'mes', 'tipo', 'regiao', 'programa'), min_year = 2016)[,3:7], c('tipo', 'regiao', 'programa'))
+invest_funcao_tipo_bim                   = bim_transform(process_invest(df = database_invest_funcao, group_var = c('ano', 'mes', 'tipo'), min_year =  2016)[,3:5], c('tipo'))
+invest_funcao_funcao_bim                 = bim_transform(process_invest(df = database_invest_funcao, group_var = c('ano', 'mes', 'funcao'), min_year =  2016)[,3:5], c('funcao'))
+invest_funcao_tipo_funcao_bim            = bim_transform(process_invest(df = database_invest_funcao, group_var = c('ano', 'mes', 'tipo', 'funcao'), min_year =  2016)[,3:6], c('tipo','funcao'))
 
 # ----------------------------- #
 # --- Matricizando os Dados --- #
 # ----------------------------- #
 invest_programa_tipo_curr_bim_m                  = pivotting(invest_programa_tipo_bim)
-invest_programa_regiao_curr_bim_m                = pivotting(invest_programa_regiao_bim, name_var = c('regiao'))
-invest_programa_tipo_regiao_curr_bim_m           = pivotting(invest_programa_tipo_regiao_bim, name_var = c('tipo', 'regiao'))
-invest_programa_tipo_regiao_programa_curr_bim_m  = pivotting(invest_programa_tipo_regiao_programa_bim, name_var = c('tipo', 'regiao', 'programa'))
+invest_programa_regiao_curr_bim_m                = pivotting(invest_programa_regiao_bim, var_names = c('regiao'))
+invest_programa_tipo_regiao_curr_bim_m           = pivotting(invest_programa_tipo_regiao_bim, var_names = c('tipo', 'regiao'))
+invest_programa_tipo_regiao_programa_curr_bim_m  = pivotting(invest_programa_tipo_regiao_programa_bim, var_names = c('tipo', 'regiao', 'programa'))
 invest_funcao_tipo_curr_bim_m                    = pivotting(invest_funcao_tipo_bim)
-invest_funcao_funcao_curr_bim_m                  = pivotting(invest_funcao_funcao_bim, name_var = 'funcao')
-invest_funcao_tipo_funcao_curr_bim_m             = pivotting(invest_funcao_tipo_funcao_bim, name_var = c('tipo', 'funcao'))
-
+invest_funcao_funcao_curr_bim_m                  = pivotting(invest_funcao_funcao_bim, var_names = 'funcao')
+invest_funcao_tipo_funcao_curr_bim_m             = pivotting(invest_funcao_tipo_funcao_bim, var_names = c('tipo', 'funcao'))
 
 # ----------------------------------------- #
 # --- Atualizacao de Valores Monetarios --- #
@@ -98,7 +96,6 @@ invest_funcao_tipo_actual_bim_m                   = value_updating(series = inve
 invest_funcao_funcao_actual_bim_m                 = value_updating(series = invest_funcao_funcao_curr_bim_m, variables = colnames(select(invest_funcao_funcao_curr_bim_m, -data)), base_period = '2025-12', start = '2015', show_price_index = FALSE)
 invest_funcao_tipo_funcao_actual_bim_m            = value_updating(series = invest_funcao_tipo_funcao_curr_bim_m, variables = colnames(select(invest_funcao_tipo_funcao_curr_bim_m, -data)), base_period = '2025-12', start = '2015', show_price_index = FALSE)
 
-
 # --------------------------------------------- #
 # --- Base Final - Valores Nominais e Reais --- #
 # --------------------------------------------- #
@@ -109,7 +106,6 @@ invest_programa_tipo_regiao_programa_bim_m = rbind(invest_programa_tipo_regiao_p
 invest_funcao_tipo_bim_m                   = rbind(invest_funcao_tipo_curr_bim_m |> mutate(tipo_preco = 'nominal'), invest_funcao_tipo_actual_bim_m |> mutate(tipo_preco = 'real'))
 invest_funcao_funcao_bim_m                 = rbind(invest_funcao_funcao_curr_bim_m |> mutate(tipo_preco = 'nominal'), invest_funcao_funcao_actual_bim_m |> mutate(tipo_preco = 'real'))
 invest_funcao_tipo_funcao_bim_m            = rbind(invest_funcao_tipo_funcao_curr_bim_m |> mutate(tipo_preco = 'nominal'), invest_funcao_tipo_funcao_actual_bim_m |> mutate(tipo_preco = 'real'))
-
 
 # ------------------------------- #
 # --- Verticalizando os Dados --- #

@@ -13,6 +13,8 @@ library(stringr)
 library(readxl)
 library(openxlsx)
 source('https://raw.githubusercontent.com/paulo-icaro/Siconfi_API/refs/heads/main/siconfi_rreo_query.R')
+source('https://raw.githubusercontent.com/paulo-icaro/Update_Variables_Actual_Value/refs/heads/main/update_actual_value.R')
+
 
 # Obs: Importação manual, caso a linha acima não funcione. Lembre-se de trocar para o seu diretório.
 # source('C://Users/Paulo/Documents/Repositorios/Siconfi_API/Query_RREO.R')
@@ -33,7 +35,7 @@ state_municipalities = read_excel(path = 'Databases/Inputs/Lista_Municipios_Bras
 
 # --- Extracao --- #
 siconfi_dataset_est = siconfi_rreo_query(ano, bimestre, tipo_demonstrativo, c('01', '04', '06'), 'E', 23, TRUE)
-siconfi_dataset_mun = siconfi_rreo_query(2025, bimestre, tipo_demonstrativo, c('01'), 'M', state_municipalities$`Cod. 7 Digitos`, TRUE)
+siconfi_dataset_mun = siconfi_rreo_query(2024:2025, bimestre, tipo_demonstrativo, c('01'), 'M', state_municipalities$`Cod. 7 Digitos`, TRUE)
 
 
 # ======================== #
@@ -80,11 +82,6 @@ resultado_primario_bruto = ajuste_data_siconfi(siconfi_dataset_est[c(1, 3, 9, 12
 investimento_municipal_bruto = ajuste_data_siconfi(siconfi_dataset_mun[c(1, 3, 5, 9, 12, 13, 14, 15)]) %>%
   filter(str_detect(conta, 'INVESTIMENTOS'), str_detect(anexo, '01'))
 
-# Despesa Corrente #
-# despesa_corrente_bruto = siconfi_dataset_est[c(1, 3, 9, 12, 13, 14, 15)] %>%
-#   filter(str_detect(conta, 'DESPESAS CORRENTES'), str_detect(anexo, '01'))
-
-
 
 # --------------------------- #
 # --- Filtros Especificos --- #
@@ -97,15 +94,12 @@ resultado_previdenciario =
          str_detect(coluna, 'DESPESAS PAGAS ATÉ O BIMESTRE')) %>%
   mutate('res_prev' = ifelse(periodo == 1, valor, valor - lag(valor)))
 
-  
 # --- Dívida Consolidada Líquida (Até o Bimestre) --- #
 divida_consolidada_liquida =
   divida_consolidada_liquida_bruto %>%
   filter(conta %in% c('DÍVIDA CONSOLIDADA LÍQUIDA (XXXI) = (XXVIII - XXIX)',
                       'DÍVIDA CONSOLIDADA LÍQUIDA (XLII) = (XXXIX - XL)') & str_detect(coluna, 'Até o Bimestre'))
 colnames(divida_consolidada_liquida)[7] = 'div_cons'
-
-
 
 # --- Resultado Primário (Acumulado no Ano) --- #
 resultado_primario =
@@ -123,23 +117,18 @@ investimento_municipal =
   select(data, exercicio, periodo, valor) %>%
   summarize('inv_mun_acum' = sum(valor)) %>%
   mutate('inv_mun' = ifelse(substr(data, 6, 6) == 1, inv_mun_acum, inv_mun_acum - lag(inv_mun_acum)))
-  
-
-# Despesa Corrente Paga (Acumulado do Bimestre)
-# despesa_corrente = siconfi_dataset[c(1, 3, 9, 12, 13, 14, 15)] %>%
-#   filter(conta == 'DESPESAS CORRENTES',
-#          coluna == 'DESPESAS PAGAS ATÉ O BIMESTRE (j)',
-#          cod_conta == 'DespesasCorrentes')
 
 
 
+# ============================== #
+# === Processamento de Dados === #
+# ============================== #
 
-# ========================= #
-# === Joining Variables === #
-# ========================= #
-
-# Obs: Adjust according to the largest dataframe
-siconfi_macro_bimonthly_m = 
+# ------------------------ #
+# --- Unindo Variaveis --- #
+# ------------------------ #
+# Obs: Ajuste de acordo com o maior dataframe
+siconfi_macro_bimonthly_curr_m = 
   divida_consolidada_liquida[c('data', 'div_cons')] %>%
   left_join(y = resultado_previdenciario[c('data', 'res_prev')], by = 'data') %>%
   left_join(y = resultado_primario[c('data', 'res_prim')], by = 'data') %>%
@@ -147,11 +136,16 @@ siconfi_macro_bimonthly_m =
   mutate(res_prim_prev = res_prev + res_prim)
 
 
+# ----------------------------------------- #
+# --- Atualizacao de Valores Monetarios --- #
+# ----------------------------------------- #
+siconfi_macro_bimonthly_actual_m = value_updating(series = siconfi_macro_bimonthly_curr_m, variables = colnames(select(siconfi_macro_bimonthly_curr_m, -data)), base_period = '2025-12', start = '2015', show_price_index = FALSE)
 
-# =============================== #
-# === Verticalizando os Dados === #
-# =============================== #
-siconfi_macro_bimonthly_t = pivot_longer(data = siconfi_macro_bimonthly_m, cols = !starts_with('data'), names_to = 'variavel', values_to = 'valor')
+
+# ------------------------------- #
+# --- Verticalizando os Dados --- #
+# ------------------------------- #
+siconfi_macro_bimonthly_t = pivot_longer(data = siconfi_macro_bimonthly_actual_m, cols = !starts_with('data'), names_to = 'variavel', values_to = 'valor')
 
 
 # ==================================== #
@@ -178,7 +172,7 @@ for(f in seq_along(formato)){
     addWorksheet(wb = wb, sheetName = 'tempo')
     writeData(wb = wb, sheet = 'tempo', as.numeric(siconfi_macro_bimonthly_m$data) + 25569, rowNames = FALSE)
   }
-  saveWorkbook(wb = wb, file = paste0(save_path[f], '.xlsx'), overwrite = TRUE)
+  saveWorkbook(wb = wb, file = paste0(save_path[f], '_teste.xlsx'), overwrite = TRUE)
 }
 
 # wb = createWorkbook(creator = 'Sefaz-CE')
