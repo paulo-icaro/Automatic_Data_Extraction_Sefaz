@@ -135,17 +135,20 @@ siconfi_macro_bimonthly_curr_m =
   left_join(y = investimento_municipal[c('data', 'inv_mun')], by = 'data') %>%
   mutate(res_prim_prev = res_prev + res_prim)
 
-
 # ----------------------------------------- #
 # --- Atualizacao de Valores Monetarios --- #
 # ----------------------------------------- #
 siconfi_macro_bimonthly_actual_m = value_updating(series = siconfi_macro_bimonthly_curr_m, variables = colnames(select(siconfi_macro_bimonthly_curr_m, -data)), base_period = '2025-12', start = '2015', show_price_index = FALSE)
 
+# --------------------------------------------- #
+# --- Base Final - Valores Nominais e Reais --- #
+# --------------------------------------------- #
+siconfi_macro_bimonthly_m = rbind(siconfi_macro_bimonthly_curr_m |> mutate(tipo_preco = 'nominal'), siconfi_macro_bimonthly_actual_m |> mutate(tipo_preco = 'real'))
 
 # ------------------------------- #
 # --- Verticalizando os Dados --- #
 # ------------------------------- #
-siconfi_macro_bimonthly_t = pivot_longer(data = siconfi_macro_bimonthly_actual_m, cols = !starts_with('data'), names_to = 'variavel', values_to = 'valor')
+siconfi_macro_bimonthly_t = pivot_longer(data = siconfi_macro_bimonthly_m, cols = !starts_with(c('data', 'tipo_preco')), names_to = 'variavel', values_to = 'valor')
 
 
 # ==================================== #
@@ -172,15 +175,9 @@ for(f in seq_along(formato)){
     addWorksheet(wb = wb, sheetName = 'tempo')
     writeData(wb = wb, sheet = 'tempo', as.numeric(siconfi_macro_bimonthly_m$data) + 25569, rowNames = FALSE)
   }
-  saveWorkbook(wb = wb, file = paste0(save_path[f], '_teste.xlsx'), overwrite = TRUE)
+  saveWorkbook(wb = wb, file = paste0(save_path[f], '.xlsx'), overwrite = TRUE)
 }
 
-# wb = createWorkbook(creator = 'Sefaz-CE')
-# addWorksheet(wb = wb, sheetName = 'tempo')
-# addWorksheet(wb = wb, sheetName = 'macro')
-# writeData(wb = wb, sheet = 'tempo', x = as.numeric(siconfi_macro_bimonthly$data) + 25569, rowNames = FALSE)
-# writeData(wb = wb, sheet = 'macro', x = siconfi_macro_bimonthly, rowNames = FALSE)
-# saveWorkbook(wb = wb, file = 'Databases/Outputs/db_siconfi_teste.xlsx', overwrite = TRUE)
 
 
 # =============== #
